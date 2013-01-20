@@ -3,9 +3,12 @@ package Math::Set;
 use warnings;
 use strict;
 
+use Scalar::Util qw(looks_like_number);
+use Carp;
+
 =head1 NAME
 
-Math::Set - The great new Math::Set!
+Math::Set - some experiments with the mathematical sets
 
 =head1 VERSION
 
@@ -15,37 +18,117 @@ Version 0.01
 
 our $VERSION = '0.01';
 
+my $empty_set_symbol = "∅";
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
+=head2 Example 1
 
-Perhaps a little code snippet.
+    my $empty_set = Math::Set->new();
+    $empty_set->print;
 
-    use Math::Set;
+Output:
 
-    my $foo = Math::Set->new();
-    ...
+    ∅
 
-=head1 EXPORT
+=head2 Example 2
 
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
+    my $empty_set_with_name = Math::Set->new(
+        name => 'E',
+    );
+    $empty_set_with_name->print;
 
-=head1 SUBROUTINES/METHODS
+Output:
 
-=head2 function1
+    E = ∅
+
+=head2 Example 3
+
+    my $some_set = Math::Set->new(
+        name => "D",
+        members => [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
+            "Saturday", "Sunday" ],
+    );
+    $some_set->print;
+
+Output:
+
+    D = { Friday Monday Saturday Sunday Thursday Tuesday Wednesday }
+
+=head2 Example 4
+
+    my $the_other_set = Math::Set->new(
+        members => [ -1..3 ],
+    );
+    $the_other_set->print;
+
+Output:
+
+    { -1 0 1 2 3 }
+
+=head1 METHODS
+
+=head2 new
 
 =cut
 
-sub function1 {
+sub new {
+    my ($class, %params) = @_;
+
+    my $self = {
+        _members => {},
+    };
+
+    bless $self, $class;
+
+    if (defined $params{name}) {
+        if (ref $params{name} eq "") {
+            $self->{_name} = $params{name};
+        } else {
+            croak "Expecting parameter 'name' to be string. Stopped"
+        }
+    }
+
+    if (defined $params{members}) {
+        if (ref $params{members} eq "ARRAY") {
+            foreach my $element (@{$params{members}}) {
+                if (ref $element eq "") {
+                    if (not defined $self->{_members}->{$element}) {
+                        $self->{_members}->{$element} = 1;
+                    } else {
+                        croak "Member '$element' exists in the set declaration more than once. It is incorrect. Stopped"
+                    }
+
+                } else {
+                    croak "Expecting member to be string. Stopped"
+                }
+
+            }
+        } else {
+            croak "Expecting parameter 'members' to be array. Stopped"
+        }
+    }
+
+    return $self;
 }
 
-=head2 function2
+sub print {
+    my ($self) = @_;
 
-=cut
+    if (defined $self->{_name}) {
+        print $self->{_name} . " = ";
+    }
 
-sub function2 {
+    if (%{$self->{_members}}) {
+        print "{ ";
+        foreach my $member (sort { if (looks_like_number($a) and looks_like_number($b)) { $a <=> $b } else { $a cmp $b } } keys %{$self->{_members}}) {
+            print $member . " ";
+        }
+        print "}\n";
+    } else {
+        print $empty_set_symbol . "\n";
+    }
+
 }
 
 =head1 AUTHOR
@@ -107,4 +190,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Math::Set
+1;
